@@ -1,0 +1,13 @@
+certifi
+chardet
+docutils
+ffpyplayer
+idna
+Kivy
+Kivy-Garden
+kivymd
+Pillow
+Pygments
+requests
+urllib3
+numpy
