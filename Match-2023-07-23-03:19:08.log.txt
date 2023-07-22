@@ -1,0 +1,58 @@
+2023-07-23 03:19:12 | {'lambda': 1, 'alpha': 0.5, 'num_interventions': 0, 'move_updates': 0} | Using policy based strategy, base top 5 moves are D17 (9.47%), R16 (9.22%), C4 (8.41%), Q3 (8.28%), Q17 (8.28%). Picked 55 random moves according to weights. Top 5 among these were D17 (9.47%), R16 (9.22%), C4 (8.41%), Q3 (8.28%), Q17 (8.28%) and picked top D17.  | 
+Recommended move: D17 | Move(BD17) | 
+Benifits to switch to AI's sugestion:
++ Score Lead: 0.000000
++ Win Rate: 0.0000%
+
+Cost from human to AI:
+- Cognitive Depth: 95.1123%
+- Intervention Cost: 1.000000
+- Idea Difference: 0.000000
+
+2023-07-23 03:19:14 | {'lambda': 1.0, 'alpha': 0.5, 'num_interventions': 0, 'move_updates': 0} | Using policy based strategy, base top 5 moves are E17 (53.86%), Q16 (11.19%), Q4 (10.59%), D4 (7.02%), D17 (2.06%). Picked 53 random moves according to weights. Top 5 among these were E17 (53.86%), Q16 (11.19%), Q4 (10.59%), D4 (7.02%), D17 (2.06%) and picked top E17.  | 
+Recommended move: E17 | Move(BE17) | 
+Benifits to switch to AI's sugestion:
++ Score Lead: 0.246037
++ Win Rate: 1.6605%
+
+Cost from human to AI:
+- Cognitive Depth: 99.9624%
+- Intervention Cost: 1.000000
+- Idea Difference: 0.147249
+
+2023-07-23 03:19:15 | Handover to AI and AI move played: E17
+2023-07-23 03:19:16 | {'lambda': 1.1666666666666667, 'alpha': 0.5, 'num_interventions': 1, 'move_updates': 0} | Using policy based strategy, base top 5 moves are E16 (95.07%), E15 (3.70%), D17 (0.06%), Q4 (0.05%), Q16 (0.05%). Top policy move has weight > 79.6%, so overriding other strategies. | 
+Recommended move: E16 | Move(BE16) | 
+Benifits to switch to AI's sugestion:
++ Score Lead: 0.735115
++ Win Rate: 4.5671%
+
+Cost from AI to human:
+- Cognitive Depth: 99.8620%
+- Intervention Cost: 1.166667
+- Idea Difference: 0.741091
+
+2023-07-23 03:19:16 | Handover to AI and AI move played: E16
+2023-07-23 03:19:17 | {'lambda': 1.2666666666666666, 'alpha': 0.5, 'num_interventions': 2, 'move_updates': 0} | Using policy based strategy, base top 5 moves are D14 (24.36%), Q16 (16.84%), Q4 (14.96%), D4 (13.47%), C14 (12.99%). Picked 51 random moves according to weights. Top 5 among these were D14 (24.36%), Q16 (16.84%), Q4 (14.96%), D4 (13.47%), C14 (12.99%) and picked top D14.  | 
+Recommended move: D14 | Move(BD14) | 
+Benifits to switch to AI's sugestion:
++ Score Lead: -0.081732
++ Win Rate: -0.3893%
+
+Cost from AI to human:
+- Cognitive Depth: 96.8280%
+- Intervention Cost: 1.266667
+- Idea Difference: 0.111460
+
+2023-07-23 03:19:18 | Handover to AI and AI move played: D14
+2023-07-23 03:19:19 | {'lambda': 1.338095238095238, 'alpha': 0.5, 'num_interventions': 3, 'move_updates': 0} | Using policy based strategy, base top 5 moves are D13 (94.70%), D17 (1.23%), Q16 (0.67%), Q4 (0.38%), D4 (0.38%). Top policy move has weight > 79.1%, so overriding other strategies. | 
+Recommended move: D13 | Move(BD13) | 
+Benifits to switch to AI's sugestion:
++ Score Lead: 0.474493
++ Win Rate: 3.0569%
+
+Cost from AI to human:
+- Cognitive Depth: 99.9207%
+- Intervention Cost: 1.338095
+- Idea Difference: 0.322419
+
