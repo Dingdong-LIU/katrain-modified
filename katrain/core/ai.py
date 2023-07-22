@@ -3,6 +3,10 @@ import math
 import random
 import re
 import time
+from datetime import datetime
+import numpy as np
+import requests
+from scipy.stats import norm
 from typing import Dict, List, Optional, Tuple
 
 from katrain.core.constants import (
@@ -40,6 +44,15 @@ from katrain.core.constants import (
 )
 from katrain.core.game import Game, GameNode, Move
 from katrain.core.utils import var_to_grid, weighted_selection_without_replacement, evaluation_class
+
+
+def extract_move_analysis(analysis:Dict, move:Move):
+    target_move_name = move.gtp()
+    moveInfos = analysis["moveInfos"]
+    for moveInfo in moveInfos:
+        move_name = moveInfo['move']
+        if move_name == target_move_name:
+            return moveInfo
 
 
 def interp_ix(lst, x):
@@ -230,7 +243,7 @@ def generate_local_tenuki_weights(ai_mode, ai_settings, policy_grid, cn, size):
     return weighted_coords, ai_thoughts
 
 
-def request_ai_analysis(game: Game, cn: GameNode, extra_settings: Dict) -> Optional[Dict]:
+def request_ai_analysis(game: Game, cn: GameNode, extra_settings: Dict, next_move:Optional[Move]=None) -> Optional[Dict]:
     error = False
     analysis = None
 
@@ -540,7 +553,7 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
     
     helper_thoughts = ""
     advice = ""
-    
+
     policy_moves = cn.policy_ranking
     pass_policy = cn.policy[-1]
     # dont make it jump around for the last few sensible non pass moves
@@ -551,80 +564,240 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
     top_policy_move = policy_moves[0][1]
     helper_thoughts += f"Using policy based strategy, base top 5 moves are {fmt_moves(policy_moves[:5])}. "  # CirF: Remember this print
 
-    if top_5_pass:  # CirF: 1 - Check for pass
-        aimove = top_policy_move
-        helper_thoughts += "Playing top one because one of them is pass."
-    else:  # weighted or pick-based
-        legal_policy_moves = [(pol, mv) for pol, mv in policy_moves if not mv.is_pass and pol > 0]  # CirF: 2 - Select legal moves
-        board_squares = size[0] * size[1]
-        # CirF: 3 - Compute thresholds
-        override = 0.8 * (1 - 0.5 * (board_squares - len(legal_policy_moves)) / board_squares)  # CirF: First override threshold
-        overridetwo = 0.85 + max(0, 0.02 * (ai_settings["kyu_rank"] - 8))  # CirF: Second override threshold
+    ## Generate AI thoughts
+    if cn.generate_advice:
+        # placeholder
+        new_top = None
 
-        # CirF: 4 - Check simple moves
-        if policy_moves[0][0] > override:  # CirF: Check best move
+        cn.generate_advice = False # This part is only assessed once
+        ## Start to generate advice
+        if top_5_pass:  # CirF: 1 - Check for pass
             aimove = top_policy_move
-            helper_thoughts += f"Top policy move has weight > {override:.1%}, so overriding other strategies."
-        elif policy_moves[0][0] + policy_moves[1][0] > overridetwo:  # CirF: Check best 2 moves
-            aimove = top_policy_move
-            helper_thoughts += (
-                f"Top two policy moves have cumulative weight > {overridetwo:.1%}, so overriding other strategies."
-            )
-        else:
-            # CirF: 5 - Generate move
-            # CirF: MAGIC
-            orig_calib_avemodrank = 0.063015 + 0.7624 * board_squares / (
-                10 ** (-0.05737 * ai_settings["kyu_rank"] + 1.9482)
-            )
-            norm_leg_moves = len(legal_policy_moves) / board_squares
-            modified_calib_avemodrank = (
-                0.3931
-                + 0.6559
-                * norm_leg_moves
-                * math.exp(
-                    -1
-                    * (
-                        3.002 * norm_leg_moves * norm_leg_moves
-                        - norm_leg_moves
-                        - 0.034889 * ai_settings["kyu_rank"]
-                        - 0.5097
-                    )
-                    ** 2
-                )
-                - 0.01093 * ai_settings["kyu_rank"]
-            ) * orig_calib_avemodrank
-            # CirF: Compute number of moves to select randomly
-            n_moves = board_squares * norm_leg_moves / (1.31165 * (modified_calib_avemodrank + 1) - 0.082653)
-            n_moves = max(1, round(n_moves))
-            
-            weighted_coords = [  # CirF: 1 means equal weights
-                (policy_grid[y][x], 1, x, y)
-                for x in range(size[0])
-                for y in range(size[1])
-                if policy_grid[y][x] > 0
-            ]
+            helper_thoughts += "Playing top one because one of them is pass."
+        else:  # weighted or pick-based
+            legal_policy_moves = [(pol, mv) for pol, mv in policy_moves if not mv.is_pass and pol > 0]  # CirF: 2 - Select legal moves
+            board_squares = size[0] * size[1]
+            # CirF: 3 - Compute thresholds
+            override = 0.8 * (1 - 0.5 * (board_squares - len(legal_policy_moves)) / board_squares)  # CirF: First override threshold
+            overridetwo = 0.85 + max(0, 0.02 * (ai_settings["kyu_rank"] - 8))  # CirF: Second override threshold
 
-            # CirF: Perform random selection
-            pick_moves = weighted_selection_without_replacement(weighted_coords, n_moves)
-            helper_thoughts += f"Picked {min(n_moves,len(weighted_coords))} random moves according to weights. "
-
-            if pick_moves:
-                # CirF: Get top 5 moves in the selection
-                new_top = [
-                    (p, Move((x, y), player=cn.next_player)) for p, wt, x, y in heapq.nlargest(5, pick_moves)
-                ]
-                aimove = new_top[0][1]
-                helper_thoughts += f"Top 5 among these were {fmt_moves(new_top)} and picked top {aimove.gtp()}. "
-                # CirF: Check for pass
-                if new_top[0][0] < pass_policy:
-                    helper_thoughts += f"But found pass ({pass_policy:.2%} to be higher rated than {aimove.gtp()} ({new_top[0][0]:.2%}) so will play top policy move instead."
-                    aimove = top_policy_move  # Directly play top policy move (among all moves)
-            else:
+            # CirF: 4 - Check simple moves
+            if policy_moves[0][0] > override:  # CirF: Check best move
                 aimove = top_policy_move
-                helper_thoughts += f"Pick policy strategy {ai_mode} failed to find legal moves, so is playing top policy move {aimove.gtp()}."
+                helper_thoughts += f"Top policy move has weight > {override:.1%}, so overriding other strategies."
+            elif policy_moves[0][0] + policy_moves[1][0] > overridetwo:  # CirF: Check best 2 moves
+                aimove = top_policy_move
+                helper_thoughts += (
+                    f"Top two policy moves have cumulative weight > {overridetwo:.1%}, so overriding other strategies."
+                )
+            else:
+                # CirF: 5 - Generate move
+                # CirF: MAGIC
+                orig_calib_avemodrank = 0.063015 + 0.7624 * board_squares / (
+                    10 ** (-0.05737 * ai_settings["kyu_rank"] + 1.9482)
+                )
+                norm_leg_moves = len(legal_policy_moves) / board_squares
+                modified_calib_avemodrank = (
+                    0.3931
+                    + 0.6559
+                    * norm_leg_moves
+                    * math.exp(
+                        -1
+                        * (
+                            3.002 * norm_leg_moves * norm_leg_moves
+                            - norm_leg_moves
+                            - 0.034889 * ai_settings["kyu_rank"]
+                            - 0.5097
+                        )
+                        ** 2
+                    )
+                    - 0.01093 * ai_settings["kyu_rank"]
+                ) * orig_calib_avemodrank
+                # CirF: Compute number of moves to select randomly
+                n_moves = board_squares * norm_leg_moves / (1.31165 * (modified_calib_avemodrank + 1) - 0.082653)
+                n_moves = max(1, round(n_moves))
+                
+                weighted_coords = [  # CirF: 1 means equal weights
+                    (policy_grid[y][x], 1, x, y)
+                    for x in range(size[0])
+                    for y in range(size[1])
+                    if policy_grid[y][x] > 0
+                ]
 
-    # CirF: 6 - Update advice
-    advice += f"Recommended move: {aimove.gtp()}"
-    game.katrain.log(f"AI thoughts: {helper_thoughts}", OUTPUT_DEBUG)
-    cn.ai_thoughts = helper_thoughts
-    cn.advice = advice
+                # CirF: Perform random selection
+                pick_moves = weighted_selection_without_replacement(weighted_coords, n_moves)
+                helper_thoughts += f"Picked {min(n_moves,len(weighted_coords))} random moves according to weights. "
+
+                if pick_moves:
+                    # CirF: Get top 5 moves in the selection
+                    new_top = [
+                        (p, Move((x, y), player=cn.next_player)) for p, wt, x, y in heapq.nlargest(5, pick_moves)
+                    ]
+                    aimove = new_top[0][1]
+                    helper_thoughts += f"Top 5 among these were {fmt_moves(new_top)} and picked top {aimove.gtp()}. "
+                    # CirF: Check for pass
+                    if new_top[0][0] < pass_policy:
+                        helper_thoughts += f"But found pass ({pass_policy:.2%} to be higher rated than {aimove.gtp()} ({new_top[0][0]:.2%}) so will play top policy move instead."
+                        aimove = top_policy_move  # Directly play top policy move (among all moves)
+                else:
+                    aimove = top_policy_move
+                    helper_thoughts += f"Pick policy strategy {ai_mode} failed to find legal moves, so is playing top policy move {aimove.gtp()}."
+
+        # Dingdong: Calculate the Cognitive Depth, by number of visits that the AI has considered.
+        if cn.analysis and cn.analysis["moves"] and len(cn.analysis["moves"]) > 0:
+            num_moves_considered = len(cn.analysis["moves"])
+            visits_list = [v['visits'] for _,v in cn.analysis["moves"].items()]
+            average_visits = sum(visits_list) / num_moves_considered
+
+            top_node_visits = 0
+            for _,v in cn.analysis["moves"].items():
+                if v['order'] == 0:
+                    top_node_visits = v['visits']
+        
+            # cognitive_depth = num_moves_considered * average_visits / game.board_size[0] / game.board_size[1]
+            cognitive_depth = top_node_visits / average_visits
+            cn.cognitive_depth = cognitive_depth
+            cn.cognitive_depth_p = norm.cdf(x=top_node_visits, loc=average_visits, scale=np.std(visits_list))
+
+        
+
+        # Dingdong: Predict human move
+        all_moves = game.root.nodes_in_tree
+        all_moves = [m for m in all_moves if m.move and not m.move.is_pass] # filter
+        if len(all_moves) > 0:
+            # convert to move objects
+            all_moves = [m.move for m in all_moves]
+            next_player = cn.next_player
+            # convert to position number
+            move_list = [m.position_number for m in all_moves]
+            player_list = [m.player_code for m in all_moves]
+            analysis_index = len(move_list)
+            # send a request to the model
+            data = {
+                "move_list" : move_list,
+                "player_list" : player_list,
+                "analysis_index": analysis_index
+            }
+            r = requests.post(
+                url=game.player_predict_url,
+                json=data
+            )
+
+            # check respond code
+            if r.status_code != 200:
+                print("Error: ", r.status_code)
+                # replace human move guess with aimove or top_policy_move
+                if new_top:
+                    cn.predicted_moves = [m[1] for m in new_top]
+                    print("Predicted human moves: ", fmt_moves(new_top))
+                else:
+                    new_top = policy_moves[:5]
+                    cn.predicted_moves = [m[1] for m in new_top]
+                    print("Predicted human moves: ", fmt_moves([new_top]))
+            else:
+                predicted_moves = r.json()["predicted_user_moves"]
+                predicted_moves = [Move.from_position_number(m, board_size=cn.board_size, player=next_player) for m in predicted_moves]
+                cn.predicted_moves = [(1,m) for m in predicted_moves]
+
+                ## Analysis these nodes
+                player_move_analysis = []
+                added_game_nodes = []
+                for move in predicted_moves:
+                    gn = GameNode(cn, None, move)
+                    added_game_nodes.append(gn)
+                    analysis = request_ai_analysis(
+                        game = game, cn=cn,
+                        extra_settings={},
+                        next_move=gn 
+                    )
+                    move_analysis = extract_move_analysis(analysis, move)
+                    if move_analysis:
+                        player_move_analysis.append(move_analysis)
+
+                gn = GameNode(cn, None, aimove)
+                added_game_nodes.append(gn)
+                ai_move_analysis = request_ai_analysis(
+                    game=game, cn=cn,
+                    extra_settings={},
+                    next_move=gn
+                )
+                ai_move_analysis = extract_move_analysis(ai_move_analysis, aimove)
+                # delete created GameNodes
+                for gn in added_game_nodes:
+                    gn.parent.children.remove(gn)
+                    del gn
+
+                cn.ai_predicted_player_winrate = np.mean([m["winrate"] for m in player_move_analysis])
+                cn.aimove_winrate = ai_move_analysis["winrate"]
+                cn.ai_predicted_player_scorelead = np.mean([m["scoreLead"] for m in player_move_analysis])
+                cn.aimove_scorelead = ai_move_analysis["scoreLead"]
+
+                cn.idea_difference = np.std([m["scoreLead"] for m in player_move_analysis] + [ai_move_analysis["scoreLead"]])
+
+        ## Update Intervention Cost
+        intervention_cost_params = game.AI_intervention_params
+        if cn.parent and cn.parent.move: 
+            if cn.parent.handover_AI_selection != "": # handover is played  :
+                pass 
+            else:
+                # Update Intervention Cost when handover is not played
+                total_moves = len(game.root.nodes_in_tree)-2
+                if total_moves == 0:
+                    intervention_rate = 0
+                else:
+                    intervention_rate = intervention_cost_params["num_interventions"] / total_moves * 2
+                intervention_cost_params["lambda"] = intervention_cost_params["lambda"] - intervention_cost_params["alpha"] * (intervention_rate - 0)
+
+
+        # CirF: 6 - Update advice
+        advice += f"\nRecommended move: {aimove.gtp()}"
+        game.katrain.log(f"AI thoughts: {helper_thoughts}", OUTPUT_DEBUG)
+        cn.ai_thoughts = helper_thoughts
+        cn.advice = advice
+        cn.aimove = aimove
+
+        ## Dingdong: Update cost notification
+        # Dingdong: Get the current Intervention Cost from the game.AI_intervention_params
+        intervention_cost = game.AI_intervention_params["lambda"]
+        cn.cost_notification = f"\nBenifits to switch to AI's sugestion:\n" +\
+            f"+ Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:.6f}\n"\
+            f"+ Win Rate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:.4%}\n"\
+            f"\n{game.cost_title}:\n" + \
+            f"- Cognitive Depth: {cn.cognitive_depth_p:.4%}\n" + \
+            f"- Intervention Cost: {intervention_cost:.6f}\n" + \
+            f"- Idea Difference: {cn.idea_difference:.6f}\n"
+            # f"Predicted human moves: {fmt_moves(cn.predicted_moves)}\n"+ \
+
+        game.cost_title = "Cost from human to AI"
+
+        with open(game.log_file, 'a') as f:
+            print(
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"), game.AI_intervention_params,
+                cn.ai_thoughts, cn.advice, cn.aimove, cn.cost_notification,
+                file=f, sep=" | ", end="\n"
+            )
+
+
+
+    ## Dingdong: Play the handover if handover is selected
+    # and update intervention cost
+    # retrive variables
+    cognitive_depth = cn.cognitive_depth
+    aimove = cn.aimove
+    intervention_cost_params = game.AI_intervention_params
+    if cn.handover_AI_selection != "":
+        game.play(aimove)
+
+        # Update Intervention Cost when handover is played
+        game.AI_intervention_params["num_interventions"] += 1
+        total_moves = len(game.root.nodes_in_tree)-2
+        if total_moves == 0:
+            intervention_rate = 0
+        else:
+            intervention_rate = intervention_cost_params["num_interventions"] / total_moves * 2
+        intervention_cost_params["lambda"] = intervention_cost_params["lambda"] - intervention_cost_params["alpha"] * (0 - 1) # 0 as intervention_rate is already minused 
+        game.cost_title = "Cost from AI to human"
+        # Log: use datetime to print current date and time, in yyyy-mm-dd hh:mm:ss format
+        with open(game.log_file, 'a') as f:
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "| Handover to AI and AI move played:", aimove.gtp(), file=f)
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "| Handover to AI and AI move played:", aimove.gtp())

@@ -453,6 +453,17 @@ class Game(BaseGame):
         self.insert_after = None
         self.region_of_interest = None
 
+        ## Dingdong: Add intervention by AI
+        self.AI_intervention_params = {
+            "lambda" : 1,
+            "alpha" : 0.5,
+            "num_interventions" : 0,
+            "move_updates": 0,
+        }
+        self.cost_title = "Cost from human to AI"
+        self.player_predict_url = "http://127.0.0.1:5000/predict"
+        self.log_file = f"Match-{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}.log"
+
         threading.Thread(
             target=lambda: self.analyze_all_nodes(analyze_fast=analyze_fast, even_if_present=False),
             daemon=True,

@@ -51,7 +51,23 @@ class GameNode(SGFNode):
         # -CirF
 
         # Dingdong: Add cost notification string
-        self.cost_notification = "This is a cost_notification"
+        self.generate_advice = True
+        self.cognitive_depth = 1
+        self.cognitive_depth_p = 0
+        self.cost_notification = "Change Opponent to AI with Calibrated Mode to start generating advice." 
+        self.handover_AI_selection = ""
+        self.need_Intervention_cost_update = 0
+        self.aimove: Optional[Move] = None
+
+        self.predict_human = True
+        self.predicted_moves = []
+
+        self.ai_predicted_player_winrate = 0
+        self.aimove_winrate = 0
+
+        self.ai_predicted_player_scorelead = 0
+        self.aimove_scorelead = 0
+        self.idea_difference = 0
         # -Dingdong
 
         self.move_number = 0
@@ -352,7 +368,7 @@ class GameNode(SGFNode):
 
         text = i18n._("move").format(number=self.depth) + f": {single_move.player} {single_move.gtp()}\n"
         # CirF: Trim comments
-        text += (self.advice + '\n' + self.cost_notification)
+        text += (self.advice + self.cost_notification)
         return text
         # -CirF
 

@@ -934,22 +934,22 @@
                 disabled: policy.checkbox.active
             AnalysisToggle:
                 id: eval
-                visible: False
-                size_hint_x: 1 if self.visible else 0
-                opacity: 1 if self.visible else 0
-                disabled: not self.visible
+                # visible: False
+                # size_hint_x: 1 if self.visible else 0
+                # opacity: 1 if self.visible else 0
+                # disabled: policy.checkbox.active
                 text: i18n._("analysis:dots")
                 tri_state: True
                 # -CirF
             AnalysisToggle:
                 id: policy
                 # CirF: Hide policy toggle
-                visible: False
-                size_hint_x: 1 if self.visible else 0
-                opacity: 1 if self.visible else 0
-                disabled: not self.visible
+                # visible: False
+                # size_hint_x: 1 if self.visible else 0
+                # opacity: 1 if self.visible else 0
+                # disabled: not self.visible
                 # -CirF
-                text: i18n._("analysis:policy")
+                text: "Handover\n to AI"
             AnalysisToggle:
                 id: ownership
                 # CirF: Hide ownership toggle

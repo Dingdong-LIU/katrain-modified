@@ -1,5 +1,6 @@
 import math
 import time
+from datetime import datetime
 from typing import List, Optional
 import numpy as np
 
@@ -608,59 +609,91 @@ class BadukPanWidget(Widget):
             pass_btn = katrain.board_controls.pass_btn
             pass_btn.canvas.after.clear()
             if katrain.analysis_controls.policy.active and policy:
-                policy_grid = var_to_grid(policy, (board_size_x, board_size_y))
-                best_move_policy = max(*policy)
-                colors = Theme.EVAL_COLORS[self.trainer_config["theme"]]
-                text_lb = 0.01 * 0.01
-                for y in range(board_size_y - 1, -1, -1):
-                    for x in range(board_size_x):
-                        move_policy = policy_grid[y][x]
-                        if move_policy < 0:
-                            continue
-                        pol_order = max(0, 5 + int(math.log10(max(1e-9, move_policy - 1e-9))))
-                        if move_policy > text_lb:
-                            draw_circle(
-                                (self.gridpos[y,x,0], self.gridpos[y,x,1]),
-                                self.stone_size * Theme.HINT_SCALE * 0.98,
-                                Theme.APPROX_BOARD_COLOR,
-                            )
-                            scale = 0.95
-                        else:
-                            scale = 0.5
-                        draw_circle(
-                            (self.gridpos[y,x,0], self.gridpos[y,x,1]),
-                            Theme.HINT_SCALE * self.stone_size * scale,
-                            (*colors[pol_order][:3], Theme.POLICY_ALPHA),
-                        )
-                        if move_policy > text_lb:
-                            Color(*Theme.HINT_TEXT_COLOR)
-                            draw_text(
-                                pos=(self.gridpos[y,x,0], self.gridpos[y,x,1]),
-                                text=f"{100 * move_policy :.2f}"[:4] + "%",
-                                font_name="Roboto",
-                                font_size=self.grid_size / 4,
-                                halign="center",
-                            )
-                        if move_policy == best_move_policy:
-                            Color(*Theme.TOP_MOVE_BORDER_COLOR[:3], Theme.POLICY_ALPHA)
-                            Line(
-                                circle=(
-                                    self.gridpos[y,x,0],
-                                    self.gridpos[y,x,1],
-                                    self.stone_size - dp(1.2),
-                                ),
-                                width=dp(2),
-                            )
+                print("Handover to AI selected")
+                self.katrain.game.current_node.handover_AI_selection = "Handover Selected"
 
-                with pass_btn.canvas.after:
-                    move_policy = policy[-1]
-                    pol_order = 5 - int(-math.log10(max(1e-9, move_policy - 1e-9)))
-                    if pol_order >= 0:
-                        draw_circle(
-                            (pass_btn.pos[0] + pass_btn.width / 2, pass_btn.pos[1] + pass_btn.height / 2),
-                            pass_btn.height / 2,
-                            (*colors[pol_order][:3], Theme.GHOST_ALPHA),
-                        )
+                # update number of interventions
+                # intervention_cost_params = self.katrain.game.AI_intervention_params
+                # intervention_cost_params["num_interventions"] += 1
+                
+
+                # ## Dingdong: Play the handover if handover is selected
+                # ## and update intervention cost
+                # cn = self.katrain.game.current_node
+                # game = self.katrain.game
+                # aimove = cn.aimove
+            
+                # cn.cost_notification += cn.handover_AI_selection + "\n"
+                # game.play(aimove)
+
+                # # Update Intervention Cost when handover is played
+                # intervention_cost_params = game.AI_intervention_params
+
+                # intervention_cost_params["num_interventions"] += 1
+                # total_moves = len(game.root.nodes_in_tree)
+                # intervention_rate = intervention_cost_params["num_interventions"] / total_moves
+                
+                # intervention_cost_params["lambda"] = intervention_cost_params["lambda"] - intervention_cost_params["alpha"] * (intervention_rate - 1)
+
+
+                # # Log: use datetime to print current date and time, in yyyy-mm-dd hh:mm:ss format
+                # print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "| Handover to AI and AI move played:", aimove.gtp())
+
+
+
+                # policy_grid = var_to_grid(policy, (board_size_x, board_size_y))
+                # best_move_policy = max(*policy)
+                # colors = Theme.EVAL_COLORS[self.trainer_config["theme"]]
+                # text_lb = 0.01 * 0.01
+                # for y in range(board_size_y - 1, -1, -1):
+                #     for x in range(board_size_x):
+                #         move_policy = policy_grid[y][x]
+                #         if move_policy < 0:
+                #             continue
+                #         pol_order = max(0, 5 + int(math.log10(max(1e-9, move_policy - 1e-9))))
+                #         if move_policy > text_lb:
+                #             draw_circle(
+                #                 (self.gridpos[y,x,0], self.gridpos[y,x,1]),
+                #                 self.stone_size * Theme.HINT_SCALE * 0.98,
+                #                 Theme.APPROX_BOARD_COLOR,
+                #             )
+                #             scale = 0.95
+                #         else:
+                #             scale = 0.5
+                #         draw_circle(
+                #             (self.gridpos[y,x,0], self.gridpos[y,x,1]),
+                #             Theme.HINT_SCALE * self.stone_size * scale,
+                #             (*colors[pol_order][:3], Theme.POLICY_ALPHA),
+                #         )
+                #         if move_policy > text_lb:
+                #             Color(*Theme.HINT_TEXT_COLOR)
+                #             draw_text(
+                #                 pos=(self.gridpos[y,x,0], self.gridpos[y,x,1]),
+                #                 text=f"{100 * move_policy :.2f}"[:4] + "%",
+                #                 font_name="Roboto",
+                #                 font_size=self.grid_size / 4,
+                #                 halign="center",
+                #             )
+                #         if move_policy == best_move_policy:
+                #             Color(*Theme.TOP_MOVE_BORDER_COLOR[:3], Theme.POLICY_ALPHA)
+                #             Line(
+                #                 circle=(
+                #                     self.gridpos[y,x,0],
+                #                     self.gridpos[y,x,1],
+                #                     self.stone_size - dp(1.2),
+                #                 ),
+                #                 width=dp(2),
+                #             )
+
+                # with pass_btn.canvas.after:
+                #     move_policy = policy[-1]
+                #     pol_order = 5 - int(-math.log10(max(1e-9, move_policy - 1e-9)))
+                #     if pol_order >= 0:
+                #         draw_circle(
+                #             (pass_btn.pos[0] + pass_btn.width / 2, pass_btn.pos[1] + pass_btn.height / 2),
+                #             pass_btn.height / 2,
+                #             (*colors[pol_order][:3], Theme.GHOST_ALPHA),
+                #         )
 
         self.redraw_hover_contents_trigger()
 

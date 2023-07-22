@@ -4,6 +4,7 @@ import math
 import re
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
+import numpy as np
 
 
 class ParseError(Exception):
@@ -38,6 +39,13 @@ class Move:
             coords=(Move.SGF_COORD.index(sgf_coords[0]), board_size[1] - Move.SGF_COORD.index(sgf_coords[1]) - 1),
             player=player,
         )
+    
+    @classmethod
+    def from_position_number(cls, position_number, board_size, player="B"):
+        coords = [0,0]
+        coords[0] = position_number // board_size[0]
+        coords[1] = position_number % board_size[1]
+        return cls(coords=tuple(coords), player=player)
 
     def __init__(self, coords: Optional[Tuple[int, int]] = None, player: str = "B"):
         """Initialize a move from zero-based coordinates and player"""
@@ -52,6 +60,14 @@ class Move:
 
     def __hash__(self):
         return hash((self.coords, self.player))
+    
+    def to_matrix(self):
+        board = np.zeros((2, 19, 19))
+        if self.player == "B":
+            board[0, self.coords[0], self.coords[1]] = 1
+        else:
+            board[1, self.coords[0], self.coords[1]] = 1
+        return board
 
     def gtp(self):
         """Returns GTP coordinates of the move"""
@@ -64,6 +80,15 @@ class Move:
         if self.is_pass:
             return ""
         return f"{Move.SGF_COORD[self.coords[0]]}{Move.SGF_COORD[board_size[1] - self.coords[1] - 1]}"
+
+    @property
+    def player_code(self):
+        return 0 if self.player == "B" else 1
+
+    @property
+    def position_number(self):
+        """Returns the position number of the move"""
+        return self.coords[0] * 19 + self.coords[1]
 
     @property
     def is_pass(self):
@@ -104,6 +129,41 @@ class SGFNode:
     def sgf_properties(self, **xargs) -> Dict:
         """For hooking into in a subclass and overriding/formatting any additional properties to be output."""
         return copy.deepcopy(self.properties)
+
+    def recent_eight_moves(self):
+        """Returns the recent 8 moves of the player, filled with none if not present"""
+        list_of_moves = []
+        current_node = self
+        # add current move to list_of_moves and update current_node to its parent, while current_node.move is not None
+        while current_node.move:
+            list_of_moves.append(current_node.move)
+            current_node = current_node.parent
+        # append none to the end of list_of_moves until it has 8 elements
+        while len(list_of_moves) < 8:
+            list_of_moves.append(None)
+        return list_of_moves
+    
+    def recent_eight_moves_matrix(self):
+        """Convert recent 8 moves to matrix, in form of ndarray of shape (8, 2, 19, 19) -> (17,19,19)"""
+        recent_eight_moves = self.recent_eight_moves()
+        recent_eight_moves_matrix_list = []
+        for move in recent_eight_moves:
+            if move:
+                recent_eight_moves_matrix_list.append(move.to_matrix())
+                last_non_None_move = move
+            else:
+                # add the last non None move to the list
+                recent_eight_moves_matrix_list.append(last_non_None_move.to_matrix())
+        # append a matrix to the end of recent_eight_moves_matrix_list represent the current player
+        # if the player is "B" add a matrix of 0 shape (1,19,19)
+        if self.move.player == "B":
+            recent_eight_moves_matrix_list.append(np.zeros((1,19,19)))
+        # if the player is "W" add a matrix of 1 shape (1,19,19)
+        else:
+            recent_eight_moves_matrix_list.append(np.ones((1,19,19)))
+        concat_matrix = np.concatenate(recent_eight_moves_matrix_list, axis=0)
+        assert concat_matrix.shape == (17,19,19)
+        return concat_matrix
 
     @staticmethod
     def order_children(children):
