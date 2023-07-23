@@ -765,11 +765,11 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         intervention_cost = game.AI_intervention_params["lambda"]
         cn.cost_notification = f"\nAI's Reason for Taking its Advice:\n" +\
             f"+ Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:.4f}\n"\
-            f"+ Win Rate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:.4%}\n"\
-            f"\n{game.cost_title}:\n" + \
-            f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
-            f"- Intervention Cost: {intervention_cost:.4f}\n" + \
-            f"- Idea Difference: {cn.idea_difference:.4f}\n"
+            f"+ Win Rate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:.4%}\n"
+            # f"\n{game.cost_title}:\n" + \
+            # f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
+            # f"- Intervention Cost: {intervention_cost:.4f}\n" + \
+            # f"- Idea Difference: {cn.idea_difference:.4f}\n"
             # f"Predicted human moves: {fmt_moves(cn.predicted_moves)}\n"+ \
 
         game.cost_title = "The Cost of Switching from Human to AI"
