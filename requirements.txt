@@ -3,11 +3,12 @@ chardet
 docutils
 ffpyplayer
 idna
-Kivy
-Kivy-Garden
-kivymd
+Kivy==2.1.0
+Kivy-Garden==0.1.4
+kivymd==0.104.1
 Pillow
 Pygments
 requests
 urllib3
 numpy
+scipy
