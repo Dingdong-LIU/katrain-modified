@@ -1,3 +1,25 @@
+# User Study Guide
+
+## Install the software
+
+1. Download the latest release of KaTrain from 
+   1. Master Branch (experiment Group)
+   2. Baseline Branch (baseline Group)
+2. Install Anaconda to have python installed. Run the module by opening downloaded folder (say "katrain-modified") in Anaconda's terminal and run the following command:
+    1. `pip install -r requirements.txt`
+    2. `python -m katrain` (you may need to install additional packages if you get an error)
+    3. Forward a given port to the system (say 5000) using ssh command: `ssh -L 5000:localhost:5000 username@hciserver` (you may need to alter this command according to Chuhan's instruction)
+
+## Server Side
+1. Log in to `hciserver` with dingdong's account. Modify `/home/dingdong/Documents/deepgo/bin/serve_model/DeepGO_flask_handler.py` to select the correct model to serve. You can also change the port to use by modifying line 104.
+2. Run flask app by 
+```bash
+conda activate deepgo
+flask --app /home/dingdong/Documents/deepgo/bin/serve_model/DeepGO_flask_handler.py run 
+```
+
+
+
 # <a name="manual"></a> KaTrain
 
 [![Latest Release](http://img.shields.io/github/release/sanderland/katrain?label=download)](http://github.com/sanderland/katrain/releases)
@@ -19,17 +41,23 @@ KaTrain is a tool for analyzing games and playing go with AI feedback from KataG
 <table>
 <td>
 
-* [Previews and YouTube tutorials](#preview)
-* [Installation](#install)
-* [Manual](#ai)
-    * [Configuring KataGo](#kata)
-    * [Play against AI](#ai)
-    * [Analyzing your Games](#analysis)
-    * [Keyboard shortcuts](#keyboard)
-    * [Distributed training](#distributed)
-    * [Themes](#themes)
-* [FAQ and Troubleshooting](#faq)
-* [Contributing](#support)
+- [User Study Guide](#user-study-guide)
+  - [Install the software](#install-the-software)
+  - [Server Side](#server-side)
+- [ KaTrain](#-katrain)
+  - [Manual](#manual)
+  - [  Preview and Youtube Videos](#--preview-and-youtube-videos)
+  - [ Installation](#-installation)
+  - [  Configuring KataGo](#--configuring-katago)
+  - [ Play against AI](#-play-against-ai)
+    - [Instant feedback](#instant-feedback)
+    - [AIs](#ais)
+  - [ Analysis](#-analysis)
+  - [ Keyboard and mouse shortcuts](#-keyboard-and-mouse-shortcuts)
+  - [  Contributing to distributed training](#--contributing-to-distributed-training)
+  - [ Themes](#-themes)
+  - [ FAQ](#-faq)
+  - [ Support / Contribute](#-support--contribute)
 
 
 <td>
