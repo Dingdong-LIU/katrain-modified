@@ -15,7 +15,7 @@
 2. Run flask app by 
 ```bash
 conda activate deepgo
-flask --app /home/dingdong/Documents/deepgo/bin/serve_model/DeepGO_flask_handler.py run 
+python /home/dingdong/Documents/deepgo/bin/serve_model/DeepGO_flask_handler.py
 ```
 
 
