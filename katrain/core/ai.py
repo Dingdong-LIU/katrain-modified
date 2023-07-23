@@ -732,7 +732,9 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
                 cn.ai_predicted_player_scorelead = np.mean([m["scoreLead"] for m in player_move_analysis])
                 cn.aimove_scorelead = ai_move_analysis["scoreLead"]
 
-                cn.idea_difference = np.std([m["scoreLead"] for m in player_move_analysis] + [ai_move_analysis["scoreLead"]])
+                cn.idea_difference = np.linalg.norm(np.array([m["winrate"] for m in player_move_analysis]) - np.array(ai_move_analysis["winrate"]))
+                
+                # np.std([m["winrate"] for m in player_move_analysis] + [ai_move_analysis["winrate"]])
 
         ## Update Intervention Cost
         intervention_cost_params = game.AI_intervention_params
@@ -747,6 +749,8 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
                 else:
                     intervention_rate = intervention_cost_params["num_interventions"] / total_moves * 2
                 intervention_cost_params["lambda"] = intervention_cost_params["lambda"] - intervention_cost_params["alpha"] * (intervention_rate - 0)
+                if intervention_cost_params["lambda"] < 0:
+                    intervention_cost_params["lambda"] = 0
 
 
         # CirF: 6 - Update advice
@@ -759,16 +763,16 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         ## Dingdong: Update cost notification
         # Dingdong: Get the current Intervention Cost from the game.AI_intervention_params
         intervention_cost = game.AI_intervention_params["lambda"]
-        cn.cost_notification = f"\nBenifits to switch to AI's sugestion:\n" +\
-            f"+ Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:.6f}\n"\
+        cn.cost_notification = f"\nAI's Reason for Taking its Advice:\n" +\
+            f"+ Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:.4f}\n"\
             f"+ Win Rate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:.4%}\n"\
             f"\n{game.cost_title}:\n" + \
-            f"- Cognitive Depth: {cn.cognitive_depth_p:.4%}\n" + \
-            f"- Intervention Cost: {intervention_cost:.6f}\n" + \
-            f"- Idea Difference: {cn.idea_difference:.6f}\n"
+            f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
+            f"- Intervention Cost: {intervention_cost:.4f}\n" + \
+            f"- Idea Difference: {cn.idea_difference:.4f}\n"
             # f"Predicted human moves: {fmt_moves(cn.predicted_moves)}\n"+ \
 
-        game.cost_title = "Cost from human to AI"
+        game.cost_title = "The Cost of Switching from Human to AI"
 
         with open(game.log_file, 'a') as f:
             print(
@@ -796,7 +800,7 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         else:
             intervention_rate = intervention_cost_params["num_interventions"] / total_moves * 2
         intervention_cost_params["lambda"] = intervention_cost_params["lambda"] - intervention_cost_params["alpha"] * (0 - 1) # 0 as intervention_rate is already minused 
-        game.cost_title = "Cost from AI to human"
+        game.cost_title = "The Cost of Switching from AI to Human"
         # Log: use datetime to print current date and time, in yyyy-mm-dd hh:mm:ss format
         with open(game.log_file, 'a') as f:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "| Handover to AI and AI move played:", aimove.gtp(), file=f)

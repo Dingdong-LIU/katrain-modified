@@ -455,12 +455,12 @@ class Game(BaseGame):
 
         ## Dingdong: Add intervention by AI
         self.AI_intervention_params = {
-            "lambda" : 1,
-            "alpha" : 0.5,
+            "lambda" : 0,
+            "alpha" : 0.2,
             "num_interventions" : 0,
             "move_updates": 0,
         }
-        self.cost_title = "Cost from human to AI"
+        self.cost_title = "The Cost of Switching from Human to AI"
         self.player_predict_url = "http://127.0.0.1:5000/predict"
         self.log_file = f"Match-{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}.log"
 
