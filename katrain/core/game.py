@@ -456,7 +456,7 @@ class Game(BaseGame):
         ## Dingdong: Add intervention by AI
         self.AI_intervention_params = {
             "lambda" : 0,
-            "alpha" : 0.2,
+            "alpha" : 0.15,
             "num_interventions" : 0,
             "move_updates": 0,
         }
