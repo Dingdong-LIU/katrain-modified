@@ -763,12 +763,16 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         ## Dingdong: Update cost notification
         # Dingdong: Get the current Intervention Cost from the game.AI_intervention_params
         intervention_cost = game.AI_intervention_params["lambda"]
+
+        # Display the only part of the cost when the last last move is played by Human
         cn.cost_notification = f"\nAI's Reason for Taking its Advice:\n" +\
             f"+ Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:.4f}\n"\
             f"+ Win Rate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:.4%}\n"\
             f"\n{game.cost_title}:\n" + \
-            f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
-            f"- Intervention Cost: {intervention_cost:.4f}\n" + \
+            f"- Intervention Cost: {intervention_cost:.4f}\n"
+        
+        if cn.parent and cn.parent.parent and cn.parent.parent.move and cn.parent.parent.handover_AI_selection != "":
+            cn.cost_notification += f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
             f"- Idea Difference: {cn.idea_difference:.4f}\n"
             # f"Predicted human moves: {fmt_moves(cn.predicted_moves)}\n"+ \
 
@@ -777,6 +781,8 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         with open(game.log_file, 'a') as f:
             print(
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"), game.AI_intervention_params,
+                f"Last Move (played by {cn.parent.move.player if cn.move and cn.parent and cn.parent.move and cn.parent.move.player else 'Initialize Game'}): {cn.parent.move.gtp() if cn.move and cn.parent and cn.parent.move else 'Initialize Game'}",
+                f"Current Move (played by {cn.move.player if cn.move and cn.move.player else None}): {cn.move.gtp() if cn.move else 'Initialize Game'}",
                 cn.ai_thoughts, cn.advice, cn.aimove, cn.cost_notification,
                 file=f, sep=" | ", end="\n"
             )
