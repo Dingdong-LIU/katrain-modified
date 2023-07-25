@@ -461,7 +461,7 @@ class Game(BaseGame):
             "move_updates": 0,
         }
         self.cost_title = "The Cost of Switching from Human to AI"
-        self.player_predict_url = "http://127.0.0.1:5000/predict"
+        self.player_predict_url = "http://143.89.191.114:7130/predict"
         self.log_file = f"Match-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
 
         threading.Thread(
