@@ -657,7 +657,8 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
             # cognitive_depth = num_moves_considered * average_visits / game.board_size[0] / game.board_size[1]
             cognitive_depth = top_node_visits / average_visits
             cn.cognitive_depth = cognitive_depth
-            cn.cognitive_depth_p = norm.cdf(x=top_node_visits, loc=average_visits, scale=np.std(visits_list))
+            # cn.cognitive_depth_p = norm.cdf(x=top_node_visits, loc=average_visits, scale=np.std(visits_list))
+            cn.cognitive_depth_p = top_node_visits/sum(visits_list)
 
         
 
@@ -765,15 +766,15 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         intervention_cost = game.AI_intervention_params["lambda"]
 
         # Display the only part of the cost when the last last move is played by Human
-        cn.cost_notification = f"\nAI's Reason for Taking its Advice:\n" +\
-            f"+ Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:.4f}\n"\
-            f"+ Win Rate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:.4%}\n"\
+        cn.cost_notification = f"\nAI's Reason for Taking its Advice: Score Lead {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:+.2f} Winrate {cn.aimove_winrate - cn.ai_predicted_player_winrate:+.2%}\n" +\
+            f"\t\t> Score Lead:\n\t\t\t\t* AI's score lead: {cn.aimove_scorelead:+.2f}  \n\t\t\t\t* Human's score lead: {cn.ai_predicted_player_scorelead:+.2f}\n"\
+            f"\t\t> Winrate:\n\t\t\t\t* AI's winrate: {cn.aimove_winrate:.2%} \n\t\t\t\t* Human's winrate: {cn.ai_predicted_player_winrate:.2%}\n"\
             f"\n{game.cost_title}:\n" + \
-            f"- Intervention Cost: {intervention_cost:.4f}\n"
-        
+            f"\t\t> Intervention Cost: {intervention_cost:.2f}\n"
+
         if cn.parent and cn.parent.parent and cn.parent.parent.move and cn.parent.parent.handover_AI_selection != "":
-            cn.cost_notification += f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
-            f"- Idea Difference: {cn.idea_difference:.4f}\n"
+            cn.cost_notification += f"\t\t> The difficulty in understanding AI's logic:\n\t\t\t\t* The complexity of AI's logic: {cn.cognitive_depth_p:.2f}\n" + \
+            f"\t\t\t\t* The difference between yours and AI's thoughts: {cn.idea_difference:.2f}\n"
             # f"Predicted human moves: {fmt_moves(cn.predicted_moves)}\n"+ \
 
         game.cost_title = "The Cost of Switching from Human to AI"
