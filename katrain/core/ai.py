@@ -764,16 +764,11 @@ def generate_helper_advice(game: Game, ai_mode: str, ai_settings: Dict):
         ## Dingdong: Update cost notification
         # Dingdong: Get the current Intervention Cost from the game.AI_intervention_params
         intervention_cost = game.AI_intervention_params["lambda"]
-        cn.cost_notification = f"\nAI's Reason for Taking its Advice: Score Lead {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:+.2f} Winrate {cn.aimove_winrate - cn.ai_predicted_player_winrate:+.2%}\n" +\
-            f"\t\t> Score Lead:\n\t\t\t\t* AI's score lead: {cn.aimove_scorelead:+.2f}  \n\t\t\t\t* Human's score lead: {cn.ai_predicted_player_scorelead:+.2f}\n"\
-            f"\t\t> Winrate:\n\t\t\t\t* AI's winrate: {cn.aimove_winrate:.2%} \n\t\t\t\t* Human's winrate: {cn.ai_predicted_player_winrate:.2%}\n"\
+        cn.cost_notification = f"\nAI's Reason for Taking its Advice:\n" +\
+            f"\t\t> Score Lead: {cn.aimove_scorelead - cn.ai_predicted_player_scorelead:+.2f}\n\t\t\t\t* AI's score lead: {cn.aimove_scorelead:+.2f}  \n\t\t\t\t* Human's score lead: {cn.ai_predicted_player_scorelead:+.2f}\n"\
+            f"\t\t> Winrate: {cn.aimove_winrate - cn.ai_predicted_player_winrate:+.2%}\n\t\t\t\t* AI's winrate: {cn.aimove_winrate:.2%} \n\t\t\t\t* Human's winrate: {cn.ai_predicted_player_winrate:.2%}\n"
             # f"\n{game.cost_title}:\n" + \
-            # f"\t\t> Intervention Cost: {intervention_cost:.2f}\n"
-            # f"\n{game.cost_title}:\n" + \
-            # f"- Cognitive Depth: {cn.cognitive_depth_p:.4f}\n" + \
-            # f"- Intervention Cost: {intervention_cost:.4f}\n" + \
-            # f"- Idea Difference: {cn.idea_difference:.4f}\n"
-            # f"Predicted human moves: {fmt_moves(cn.predicted_moves)}\n"+ \
+            # f"\t\t> Intervention Cost: {intervention_cost:.2%}\n"
 
         game.cost_title = "The Cost of Switching from Human to AI"
 
